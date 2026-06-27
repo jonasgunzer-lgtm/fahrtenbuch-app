@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Fahrtenbuch">
+  <!-- Hintergrund: abgerundetes Quadrat in Akzentgrün (maskable-sicher) -->
+  <rect width="512" height="512" rx="104" ry="104" fill="#2E7D32"/>
+  <!-- Karosserie (weiß), zentriert -->
+  <path fill="#ffffff" d="M96 312
+           c0 -8 5 -14 13 -16 l23 -6 l34 -64
+           c6 -12 18 -20 32 -20 h116
+           c14 0 26 8 32 20 l34 64 l23 6
+           c8 2 13 8 13 16 v44
+           c0 9 -7 16 -16 16 h-12
+           a26 26 0 0 1 -52 0 h-140
+           a26 26 0 0 1 -52 0 h-12
+           c-9 0 -16 -7 -16 -16 z"/>
+  <!-- Fensterfläche (in Akzentfarbe ausgespart) -->
+  <path fill="#2E7D32" d="M188 232 h136 l24 52 h-184 z"/>
+  <!-- B-Säule -->
+  <rect x="250" y="232" width="12" height="52" fill="#2E7D32"/>
+  <!-- Räder -->
+  <circle cx="176" cy="356" r="22" fill="#2E7D32"/>
+  <circle cx="336" cy="356" r="22" fill="#2E7D32"/>
+  <circle cx="176" cy="356" r="9" fill="#ffffff"/>
+  <circle cx="336" cy="356" r="9" fill="#ffffff"/>
+</svg>
