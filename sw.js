@@ -1,72 +1,52 @@
-// ============================================================
-// sw.js – Service Worker
-// Strategie: Cache-First mit Hintergrund-Aktualisierung
-// (stale-while-revalidate). App startet sofort und offline,
-// erneuert die Dateien aber im Hintergrund.
-// Bei Änderungen an gecachten Dateien CACHE-Version erhöhen.
-// ============================================================
-
-const CACHE = "fahrtenbuch-v2";
-
-// Komplette App-Shell für den Offline-Betrieb.
+/* Service Worker: legt die App im Geraetespeicher ab, damit sie ohne Netz laeuft. */
+const CACHE = "bonjour-v1";
 const ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json",
+  "./manifest.webmanifest",
   "./css/styles.css",
+  "./data/alltag.js",
+  "./data/reise.js",
+  "./js/content.js",
+  "./js/srs.js",
+  "./js/tts.js",
+  "./js/ui.js",
+  "./js/store.js",
+  "./js/session.js",
   "./js/app.js",
-  "./js/router.js",
-  "./js/db.js",
-  "./js/data.js",
-  "./js/osrm.js",
-  "./js/documentTemplates.js",
-  "./js/screens/newEntry.js",
-  "./js/screens/entries.js",
-  "./js/screens/export.js",
-  "./js/screens/settings.js",
-  "./vendor/pizzip.js",
-  "./vendor/docxtemplater.js",
-  "./templates/fahrtkostenerstattung-2026.docx",
-  "./icons/icon.svg",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/apple-touch-icon.png"
 ];
 
-// Installation: App-Shell cachen (einzeln, damit ein fehlendes Asset
-// nicht die gesamte Installation verhindert).
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => Promise.allSettled(ASSETS.map((u) => cache.add(u))))
-      .then(() => self.skipWaiting())
+self.addEventListener("install", function (e) {
+  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }).then(function () { return self.skipWaiting(); }));
+});
+
+self.addEventListener("activate", function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
   );
 });
 
-// Aktivierung: veraltete Caches entfernen.
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
+self.addEventListener("fetch", function (e) {
+  if (e.request.method !== "GET") return;
+  if (e.request.url.indexOf(self.location.origin) !== 0) return;
 
-// Fetch: nur gleiche Origin abfangen (OSRM/Nominatim immer direkt ins Netz).
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-
-  event.respondWith(
-    caches.open(CACHE).then((cache) =>
-      cache.match(req).then((cached) => {
-        const network = fetch(req)
-          .then((res) => {
-            if (res && res.status === 200) cache.put(req, res.clone());
-            return res;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
-    )
+  // Aus dem Cache sofort ausliefern, im Hintergrund nach einer neueren Fassung sehen.
+  e.respondWith(
+    caches.open(CACHE).then(function (cache) {
+      return cache.match(e.request).then(function (hit) {
+        const network = fetch(e.request).then(function (res) {
+          if (res && res.ok) cache.put(e.request, res.clone());
+          return res;
+        }).catch(function () {
+          return hit || (e.request.mode === "navigate" ? cache.match("./index.html") : Response.error());
+        });
+        return hit || network;
+      });
+    })
   );
 });
